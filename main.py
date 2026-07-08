@@ -33,9 +33,9 @@ from fastapi import FastAPI, HTTPException
 import db
 
 app = FastAPI(
-    title="Swiss Votes API",
+    title="Swissvotes API (unofficial)",
     description="Browse Swiss popular votes, grouped by legislative period (Legislatur).",
-    version="0.0.1",
+    version="0.0.2",
     contact={
         "url": "https://github.com/pascal-huber/swissvotes-api"
     },
@@ -57,6 +57,7 @@ def api_root() -> dict[str, Any]:
         "description": app.description,
         "license_info": app.license_info,
         "version": app.version,
+        "contact": app.contact,
         "license_data": {
             "name": "CC BY 4.0",
             "source": "Swissvotes, Année Politique Suisse, Universität Bern",
