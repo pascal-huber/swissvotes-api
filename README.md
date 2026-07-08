@@ -19,7 +19,7 @@ on swissvotes.ch.
 docker build -t votes-api .
 docker run -d --name votes-api -p 5000:5000 \
   -v mongo_data:/data/db \
-  -v $(pwd)/swissvotes.ch.csv:/data/data.csv:ro \
+  -v $(pwd)/data/swissvotes.ch.csv:/data/data.csv:ro \
   votes-api
 ```
 
