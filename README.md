@@ -10,7 +10,7 @@ on swissvotes.ch.
   [Swissvotes](https://swissvotes.ch) (Année Politique Suisse, Universität
   Bern), licensed under [CC BY
   4.0](https://creativecommons.org/licenses/by/4.0/) — see
-  [`data/LICENSE-DATA.md`](data/LICENSE-DATA.md) for the required attribution.
+  [`LICENSE-DATA`](data/LICENSE-DATA.md) for the required attribution.
   This data is not created by this project's authors.
 
 ## Instructions
