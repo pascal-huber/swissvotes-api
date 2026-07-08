@@ -3,6 +3,8 @@
 This repo contains an unofficial API for the *Swissvotes-Datensatz* published
 on swissvotes.ch. 
 
+Demo: https://swissvotes-api.resolved.ch
+
 ## License
 
 - **Code** in this repository is licensed under the [MIT License](LICENSE).
@@ -13,7 +15,14 @@ on swissvotes.ch.
   [`LICENSE-DATA`](data/LICENSE-DATA.md) for the required attribution.
   This data is not created by this project's authors.
 
-## Instructions
+## Running it
+
+```
+docker pull ghcr.io/pascal-huber/swissvotes-api:latest
+docker run -d --name votes-api -p 5000:5000 ghcr.io/pascal-huber/swissvotes-api:latest
+```
+
+## Build Instructions
 
 ```
 docker build -t votes-api .
