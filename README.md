@@ -1,4 +1,4 @@
-# Swissvotes Database
+# Swissvotes API
 
 This repo contains an unofficial API for the *Swissvotes-Datensatz* published
 on swissvotes.ch. 
