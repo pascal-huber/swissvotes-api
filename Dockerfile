@@ -20,6 +20,8 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 COPY import_csv.py db.py main.py entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 
+COPY data/swissvotes.ch.csv /data/data.csv
+
 ENV MONGO_URI=mongodb://localhost:27017
 ENV MONGO_DB=votes_db
 ENV PORT=5000
