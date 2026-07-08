@@ -35,7 +35,14 @@ import db
 app = FastAPI(
     title="Swiss Votes API",
     description="Browse Swiss popular votes, grouped by legislative period (Legislatur).",
-    version="1.0.0",
+    version="0.0.1",
+    contact={
+        "url": "https://github.com/pascal-huber/swissvotes-api"
+    },
+    license_info={
+        "name": "MIT License",
+        "identifier": "MIT"
+    }
 )
 
 
@@ -47,8 +54,10 @@ def api_root() -> dict[str, Any]:
     """
     return {
         "name": app.title,
+        "description": app.description,
+        "license_info": app.license_info,
         "version": app.version,
-        "data_license": {
+        "license_data": {
             "name": "CC BY 4.0",
             "source": "Swissvotes, Année Politique Suisse, Universität Bern",
             "url": "https://creativecommons.org/licenses/by/4.0/",
