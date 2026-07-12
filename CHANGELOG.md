@@ -7,10 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+### Fixed
+
 ### Changed
 
- - Include votes on legislatur endpoints
- - Add /api/legislatur/current
+### Removed
+
+## [0.0.3] - 2026-07-12
+
+### Added
+
+ - Add /api/legislatur/current endpiont
+
+### Changed
+
+ - Include votes data on legislatur endpoints
+ - Add fields for start- and end year of each legislatur
 
 ### Removed
 
