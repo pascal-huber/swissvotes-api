@@ -6,6 +6,7 @@ so it can be tested/reused independently.
 """
 
 import os
+from datetime import date
 
 from pymongo import MongoClient
 
@@ -50,8 +51,12 @@ def get_votes_by_legislatur(number: int) -> list:
 def _aggregate_legislaturen() -> list:
     """
     Internal helper: returns a list of
-        {"legislatur": <int>, "legisjahre": [<sorted distinct ints>]}
+        {"legislatur": <int>, "start": <int or None>, "end": <int or None>}
     sorted ascending by legislatur number.
+
+    "start"/"end" are the legisjahr period's start/end years (e.g. 1848 and
+    1851 for "1848-1851"), taken from the earliest start year / latest end
+    year seen across the legislatur's votes.
 
     Only legislatur numbers that actually appear on at least one vote are
     included -- some legislatur numbers may have no votes at all and are
@@ -62,12 +67,21 @@ def _aggregate_legislaturen() -> list:
     coll = get_collection()
     pipeline = [
         {"$match": {"legislatur": {"$ne": None}}},
-        {"$group": {"_id": "$legislatur", "legisjahre": {"$addToSet": "$legisjahr"}}},
+        {"$group": {
+            "_id": "$legislatur",
+            "start_years": {"$addToSet": "$legisjahr.start"},
+            "end_years": {"$addToSet": "$legisjahr.end"},
+        }},
     ]
     items = []
     for r in coll.aggregate(pipeline):
-        legisjahre = sorted(v for v in r.get("legisjahre", []) if v is not None)
-        items.append({"legislatur": r["_id"], "legisjahre": legisjahre})
+        start_years = sorted(v for v in r.get("start_years", []) if v is not None)
+        end_years = sorted(v for v in r.get("end_years", []) if v is not None)
+        items.append({
+            "legislatur": r["_id"],
+            "start": start_years[0] if start_years else None,
+            "end": end_years[-1] if end_years else None,
+        })
     items.sort(key=lambda item: item["legislatur"])
     return items
 
@@ -75,15 +89,22 @@ def _aggregate_legislaturen() -> list:
 def _format_legislatur_entry(items: list, index: int) -> dict:
     """
     Build the public representation of one legislatur entry, including a
-    "legisjahr" string (not an array) and "previous"/"next" references to
-    the neighbouring legislatur entries in this list, if any.
+    "legisjahr" string (built from the "start"/"end" years) and
+    "previous"/"next" references to the neighbouring legislatur entries in
+    this list, if any.
     """
     item = items[index]
-    legisjahr_str = ", ".join(str(v) for v in item["legisjahre"])
+    start, end = item["start"], item["end"]
+    if start is not None and end is not None:
+        legisjahr_str = f"{start}-{end}"
+    else:
+        legisjahr_str = None
 
     entry = {
         "legislatur": item["legislatur"],
         "legisjahr": legisjahr_str,
+        "legisjahr_start": start,
+        "legisjahr_end": end,
     }
 
     if index > 0:
@@ -109,18 +130,49 @@ def list_legislaturen() -> list:
 
 
 def get_legislatur(number: int):
-    """Return a single legislatur entry by number, or None if it has no votes."""
+    """Return a single legislatur entry by number (with its votes), or None
+    if it has no votes."""
     items = _aggregate_legislaturen()
     for i, item in enumerate(items):
         if item["legislatur"] == number:
-            return _format_legislatur_entry(items, i)
+            entry = _format_legislatur_entry(items, i)
+            entry["votes"] = get_votes_by_legislatur(number)
+            return entry
     return None
 
 
 def get_latest_legislatur():
-    """Return the legislatur entry with the highest number, or None if empty."""
+    """Return the legislatur entry with the highest number (with its
+    votes), or None if empty."""
     items = _aggregate_legislaturen()
     if not items:
         return None
-    return _format_legislatur_entry(items, len(items) - 1)
+    entry = _format_legislatur_entry(items, len(items) - 1)
+    entry["votes"] = get_votes_by_legislatur(items[-1]["legislatur"])
+    return entry
+
+
+def get_current_legislatur():
+    """
+    Return the legislatur entry (with its votes) whose period
+    (legisjahr_start..legisjahr_end) contains the current year, or None if
+    none matches.
+
+    If more than one legislatur's period contains the current year (i.e.
+    their periods overlap), the one with the lower start year is picked
+    (ties broken by the lower end year).
+    """
+    year = date.today().year
+    items = _aggregate_legislaturen()
+    matches = [
+        i for i, item in enumerate(items)
+        if item["start"] is not None and item["end"] is not None
+        and item["start"] <= year <= item["end"]
+    ]
+    if not matches:
+        return None
+    best = min(matches, key=lambda i: (items[i]["start"], items[i]["end"]))
+    entry = _format_legislatur_entry(items, best)
+    entry["votes"] = get_votes_by_legislatur(items[best]["legislatur"])
+    return entry
 

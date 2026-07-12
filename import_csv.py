@@ -10,7 +10,11 @@ republished) CSV file, e.g. the Swiss Votes dataset.
 - Empty CSV cells are dropped entirely (sparse rows only keep real data).
 - Field names grouped by their FIRST underscore into nested sub-documents,
   e.g. "titel_kurz_de" -> {"titel": {"kurz_de": ...}}.
-- "legislatur" and "legisjahr" are parsed as int and indexed (legislatur).
+- "legislatur" is parsed as int and indexed.
+- "legisjahr" (format "<start-year>-<end-year>") is split into
+  "legisjahr_start" and "legisjahr_end" int fields, which are then grouped
+  (like any other "prefix_rest" field) into a nested
+  {"legisjahr": {"start": ..., "end": ...}} sub-document.
 - "anr" is kept as the RAW STRING from the CSV (not parsed as a number),
   since some values contain a dot, e.g. "5.1" -- converting to float would
   risk losing/altering that formatting (e.g. "5.10" -> 5.1).
@@ -29,7 +33,8 @@ from pathlib import Path
 
 from pymongo import MongoClient
 
-INT_FIELDS = {"legislatur", "legisjahr"}
+INT_FIELDS = {"legislatur"}
+LEGISJAHR_RE = re.compile(r"^\s*(\d{4})\s*-\s*(\d{4})\s*$")
 
 
 def slugify_column(name: str) -> str:
@@ -121,7 +126,14 @@ def row_to_document(fieldnames, final_columns, row) -> dict:
         if raw == "" or raw is None:
             continue  # drop empty values entirely
 
-        if slug_col in INT_FIELDS:
+        if slug_col == "legisjahr":
+            match = LEGISJAHR_RE.match(raw)
+            if match:
+                flat["legisjahr_start"] = int(match.group(1))
+                flat["legisjahr_end"] = int(match.group(2))
+            else:
+                flat[slug_col] = raw  # fall back to raw string if unparsable
+        elif slug_col in INT_FIELDS:
             try:
                 flat[slug_col] = int(float(raw))
             except ValueError:

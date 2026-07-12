@@ -18,12 +18,15 @@ Routes:
     GET /api/legislatur                    -> list all legislatur periods
                                                (each with a "legisjahr"
                                                string and previous/next refs)
+    GET /api/legislatur/current            -> the legislatur whose period
+                                               contains the current year
+                                               (with its votes)
     GET /api/legislatur/latest             -> the legislatur with the
-                                               highest number
+                                               highest number (with its
+                                               votes)
     GET /api/legislatur/{number}           -> a single legislatur period
-                                               (with previous/next refs)
-    GET /api/legislatur/{number}/votes/
-        (and .../votes)                    -> all votes in that legislatur
+                                               (with previous/next refs and
+                                               its votes)
 """
 
 from typing import Any
@@ -73,9 +76,9 @@ def api_root() -> dict[str, Any]:
             "votes": "/api/votes/",
             "vote_by_anr": "/api/votes/{anr}",
             "legislaturen": "/api/legislatur",
+            "current_legislatur": "/api/legislatur/current",
             "latest_legislatur": "/api/legislatur/latest",
             "legislatur_by_number": "/api/legislatur/{number}",
-            "votes_by_legislatur": "/api/legislatur/{number}/votes/",
         },
     }
 
@@ -114,10 +117,23 @@ def api_list_legislaturen() -> list[dict[str, Any]]:
     return db.list_legislaturen()
 
 
-# NOTE: this must be declared *before* "/api/legislatur/{number}" so that
-# "latest" is tried first. In practice this isn't strictly required since
-# {number} is int-typed and "latest" can never match that pattern, but
-# declaring it first keeps the intent obvious and avoids any ambiguity.
+# NOTE: "current" and "latest" must be declared *before*
+# "/api/legislatur/{number}" so they're tried first. In practice this isn't
+# strictly required since {number} is int-typed and neither "current" nor
+# "latest" can ever match that pattern, but declaring them first keeps the
+# intent obvious and avoids any ambiguity.
+@app.get(
+    "/api/legislatur/current",
+    summary="Get the legislatur whose period contains the current year",
+    response_model=dict[str, Any],
+)
+def api_current_legislatur() -> dict[str, Any]:
+    legislatur = db.get_current_legislatur()
+    if legislatur is None:
+        raise HTTPException(status_code=404, detail="No legislatur found for the current year")
+    return legislatur
+
+
 @app.get(
     "/api/legislatur/latest",
     summary="Get the legislatur with the highest number",
@@ -140,14 +156,4 @@ def api_get_legislatur(number: int) -> dict[str, Any]:
     if legislatur is None:
         raise HTTPException(status_code=404, detail=f"No legislatur found with number {number}")
     return legislatur
-
-
-@app.get("/api/legislatur/{number}/votes", include_in_schema=False)
-@app.get(
-    "/api/legislatur/{number}/votes/",
-    summary="List all votes in a given legislatur",
-    response_model=list[dict[str, Any]],
-)
-def api_votes_for_legislatur(number: int) -> list[dict[str, Any]]:
-    return db.get_votes_by_legislatur(number)
 
