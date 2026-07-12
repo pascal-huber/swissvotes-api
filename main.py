@@ -38,7 +38,7 @@ import db
 app = FastAPI(
     title="Swissvotes API (unofficial)",
     description="Browse Swiss popular votes, grouped by legislative period (Legislatur).",
-    version="0.0.3",
+    version="0.0.4",
     contact={
         "url": "https://github.com/pascal-huber/swissvotes-api"
     },

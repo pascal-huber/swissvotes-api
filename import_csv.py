@@ -8,8 +8,8 @@ republished) CSV file, e.g. the Swiss Votes dataset.
 - Full atomic refresh via a "votes_staging" collection + rename.
 - Column names slugified into safe, stable field names.
 - Empty CSV cells are dropped entirely (sparse rows only keep real data).
-- Field names grouped by their FIRST underscore into nested sub-documents,
-  e.g. "titel_kurz_de" -> {"titel": {"kurz_de": ...}}.
+- Field names grouped by EVERY underscore into nested sub-documents,
+  e.g. "titel_kurz_de" -> {"titel": {"kurz": {"de": ...}}}.
 - "legislatur" is parsed as int and indexed.
 - "legisjahr" (format "<start-year>-<end-year>") is split into
   "legisjahr_start" and "legisjahr_end" int fields, which are then grouped
@@ -81,39 +81,41 @@ def read_csv_rows(path: Path):
     raise last_err
 
 
+def _set_nested(node: dict, parts: list, value) -> None:
+    key = parts[0]
+    if len(parts) == 1:
+        existing = node.get(key)
+        if isinstance(existing, dict):
+            existing["_value"] = value
+        else:
+            node[key] = value
+        return
+
+    existing = node.get(key)
+    if isinstance(existing, dict):
+        child = existing
+    else:
+        child = {} if existing is None else {"_value": existing}
+        node[key] = child
+    _set_nested(child, parts[1:], value)
+
+
 def group_fields(flat: dict) -> dict:
     """
     Group a flat {slug_field: value} dict into nested sub-documents by
-    splitting each field name on its FIRST underscore only.
+    splitting each field name on EVERY underscore.
 
-        "a_b_c_d" -> grouped["a"]["b_c_d"]
+        "a_b_c_d" -> grouped["a"]["b"]["c"]["d"]
         "legislatur" (no underscore) -> grouped["legislatur"] (stays flat)
 
     Handles the edge case where the same prefix is used both as a flat
-    scalar AND as a group elsewhere in the same row: the scalar is kept
-    under a "_value" key so no data is silently lost or overwritten.
+    scalar AND as a group elsewhere in the same row (at any nesting level):
+    the scalar is kept under a "_value" key so no data is silently lost or
+    overwritten.
     """
     grouped: dict = {}
     for key, value in flat.items():
-        if "_" in key:
-            prefix, rest = key.split("_", 1)
-        else:
-            prefix, rest = key, None
-
-        if rest is None:
-            existing = grouped.get(prefix)
-            if isinstance(existing, dict):
-                existing["_value"] = value
-            else:
-                grouped[prefix] = value
-        else:
-            existing = grouped.get(prefix)
-            if isinstance(existing, dict):
-                existing[rest] = value
-            elif existing is None:
-                grouped[prefix] = {rest: value}
-            else:
-                grouped[prefix] = {"_value": existing, rest: value}
+        _set_nested(grouped, key.split("_"), value)
     return grouped
 
 

@@ -5,6 +5,10 @@ on swissvotes.ch.
 
 Demo: https://swissvotes-api.resolved.ch
 
+## Disclaimer
+
+This is a first version and the API is still subject to breaking changes.
+
 ## License
 
 - **Code** in this repository is licensed under the [MIT License](LICENSE).
@@ -14,6 +18,14 @@ Demo: https://swissvotes-api.resolved.ch
   4.0](https://creativecommons.org/licenses/by/4.0/) — see
   [`LICENSE-DATA`](data/LICENSE-DATA.md) for the required attribution.
   This data is not created by this project's authors.
+
+## Data
+
+The data from the (official) swissvotes CSV is changed as follows:
+
+ - Field names with an underscore are split (for example `"info\_br\_de":
+   "..."` becomes `"info": {"br": {"de": "..."}}}`).
+ - Fields without a value are omitted.
 
 ## Running it
 
