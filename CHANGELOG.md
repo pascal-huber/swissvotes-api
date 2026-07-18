@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the resolved German category text, nested per policy area. See
   `categories.py`. **Breaking**: consumers reading the old `d*e*` fields
   need to switch to `categories`.
+- Set permissive CORS policy for GET requests
 
 ## [0.0.4] - 2026-07-12
 
