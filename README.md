@@ -26,6 +26,19 @@ The data from the (official) swissvotes CSV is changed as follows:
  - Field names with an underscore are split (for example `"info\_br\_de":
    "..."` becomes `"info": {"br": {"de": "..."}}}`).
  - Fields without a value are omitted.
+ - The raw `d1e1`/`d1e2`/`d1e3`, `d2e1`/`d2e2`/`d2e3` and `d3e1`/`d3e2`/`d3e3`
+   Politikbereich (policy area) codes are replaced by a single `categories`
+   field: a list of up to three `[level1, level2, level3]` arrays (one per
+   policy area the vote is tagged with), most-general-first, holding the
+   resolved German text as deep as it's assigned, e.g.:
+   ```json
+   "categories": [
+     ["Staatsordnung", "Politisches System", "Bundesverfassung"],
+     ["Staatsordnung", "Föderalismus"]
+   ]
+   ```
+   See [`categories.py`](categories.py) for the full code table,
+   transcribed from the Swissvotes codebook.
 
 ## Running it
 

@@ -10,8 +10,14 @@ from datetime import date
 
 from pymongo import MongoClient
 
+import categories
+
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017")
 MONGO_DB = os.environ.get("MONGO_DB", "votes_db")
+
+# The three Politikbereich (policy area) code groups on a vote document,
+# each a 3-level hierarchy: d<n>e1 (top) / d<n>e2 (mid) / d<n>e3 (bottom).
+_CATEGORY_FIELDS = [f"d{n}e{level}" for n in (1, 2, 3) for level in (1, 2, 3)]
 
 _client = None
 
@@ -23,10 +29,25 @@ def get_collection():
     return _client[MONGO_DB]["votes"]
 
 
+def _resolve_categories(vote: dict) -> dict:
+    """
+    Replace the raw Politikbereich fields (d1e1/d1e2/d1e3, d2e1/d2e2/d2e3,
+    d3e1/d3e2/d3e3) with a single "categories" field: a list of up to three
+    [level1, level2, level3] arrays of resolved text, nested per policy
+    area. See categories.extract_categories().
+    """
+    if vote is None:
+        return vote
+    vote["categories"] = categories.extract_categories(vote)
+    for field in _CATEGORY_FIELDS:
+        vote.pop(field, None)
+    return vote
+
+
 def list_votes() -> list:
     """Return all votes."""
     coll = get_collection()
-    return list(coll.find({}, {"_id": 0}))
+    return [_resolve_categories(v) for v in coll.find({}, {"_id": 0})]
 
 
 def get_vote_by_anr(anr: str):
@@ -38,14 +59,14 @@ def get_vote_by_anr(anr: str):
     float-formatting ambiguity (e.g. "5.10" vs "5.1").
     """
     coll = get_collection()
-    return coll.find_one({"anr": anr}, {"_id": 0})
+    return _resolve_categories(coll.find_one({"anr": anr}, {"_id": 0}))
 
 
 def get_votes_by_legislatur(number: int) -> list:
     """Return all votes belonging to the given legislatur."""
     coll = get_collection()
     cursor = coll.find({"legislatur": number}, {"_id": 0})
-    return list(cursor)
+    return [_resolve_categories(v) for v in cursor]
 
 
 def _aggregate_legislaturen() -> list:

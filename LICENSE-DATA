@@ -1,5 +1,6 @@
-This license applies ONLY to data/swissvotes.ch.csv, not to the rest of this
-repository (see LICENSE for the code license).
+This license applies ONLY to data/swissvotes.ch.csv and data/data.pdf, not to
+the rest of this repository (see LICENSE for the code license). The category
+labels in categories.py are transcribed from data/data.pdf.
 
 Source: Swissvotes, Année Politique Suisse, Universität Bern.
 https://swissvotes.ch/page/dataset

@@ -15,6 +15,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.1.0] - 2026-07-18
+
+### Changed
+
+- The raw `d1e1`/`d1e2`/`d1e3`, `d2e1`/`d2e2`/`d2e3` and `d3e1`/`d3e2`/`d3e3`
+  Politikbereich fields on votes are replaced by a single `categories`
+  field: a list of up to three `[level1, level2, level3]` arrays holding
+  the resolved German category text, nested per policy area. See
+  `categories.py`. **Breaking**: consumers reading the old `d*e*` fields
+  need to switch to `categories`.
+
 ## [0.0.4] - 2026-07-12
 
 ### Changed

@@ -17,7 +17,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-COPY import_csv.py db.py main.py entrypoint.sh ./
+COPY import_csv.py db.py main.py categories.py entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 
 COPY data/swissvotes.ch.csv /data/data.csv
