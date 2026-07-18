@@ -32,6 +32,7 @@ Routes:
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 import db
 
@@ -46,6 +47,15 @@ app = FastAPI(
         "name": "MIT License",
         "identifier": "MIT"
     }
+)
+
+# Public, read-only, unauthenticated API: safe to allow any origin so
+# browser-based clients (e.g. VoteLog) hosted elsewhere can fetch it.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET"],
+    allow_headers=["*"],
 )
 
 
